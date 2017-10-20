@@ -3,7 +3,10 @@ const express = require('express');
 const router = express.Router();
 const mentors = require('../controllers/mentorController');
 
-router.get('/mentors', mentors.listAllMentors);
+const passport = require('passport');
+const requireAuth = passport.authenticate('jwt', { session: false });
+
+router.get('/mentors', requireAuth, mentors.listAllMentors);
 
 router.post('/mentors', mentors.addMentor);
 
