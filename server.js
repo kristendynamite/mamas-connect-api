@@ -8,10 +8,6 @@ const config = require('./config/main');
 mongoose.Promise = global.Promise;
 mongoose.connect(config.database);
 
-//Import models here
-const Mentor = require('./api/models/mentorModel');
-
-
 
 ////////////////
 // MIDDLEWARE //
@@ -19,6 +15,8 @@ const Mentor = require('./api/models/mentorModel');
 // Set up body parser
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+app.use(logger('dev'));
 
 //set up CORS
 app.use(function(req, res, next) {
@@ -31,14 +29,11 @@ app.use(function(req, res, next) {
 
 
 //Import routes here
-const mentorRoutes = require('./api/routes/mentorRoutes');
-const authRoutes = require('./api/routes/authenticationRoutes');
+const userRoutes = require('./api/routes/userRoutes');
 
-app.use(logger('dev'));
 
 //register Routes
-app.use('/api', mentorRoutes);
-app.use('/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 
 

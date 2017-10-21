@@ -1,8 +1,16 @@
-const jwt = require('jsonwebtoken'),
-      crypto = require('crypto'),
-      User = require('../models/userModel'),
-      config = require('../../config/main');
+'use strict';
+const mongoose = require('mongoose');
+const UserModel = require('../models/userModel');
+const User = mongoose.model('User');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const config = require('../../config/main');
+const sendWrappedResponse = require('../../utilities/responseWrapper');
 
+let controller = {};
+
+
+// Helper functions
 function generateToken(user) {
   return jwt.sign(user, config.secret, {
     expiresIn: 60 * 60 * 24 * 7 // in seconds
@@ -20,11 +28,60 @@ function setUserInfo(request) {
   };
 }
 
+//GET all users
+controller.listAllUsers = (req, res) => {
+  sendWrappedResponse(User, res, req.query);
+};
+
+//GET one user by id
+controller.getUser = (req, res) => {
+  User.findById(req.params.userId, (err, user) => {
+    if (err)
+      res.send(err);
+    res.json(user);
+  });
+};
+
+//PUT update user
+controller.updateUser = (req, res) => {
+  User.findOneAndUpdate({_id: req.params.userId}, req.body, {new: true}, (err, user) => {
+    if (err)
+      res.send(err);
+    res.json(user);
+  });
+};
+
+//DELETE user by id
+controller.deleteUser = (req, res) => {
+  User.remove({
+    _id: req.params.userId
+  }, (err, user) => {
+    if (err)
+      res.send(err);
+    res.json({ message: 'User successfully deleted' });
+  });
+};
+
+//GET me
+controller.getMe = (req, res) => {
+
+  const authorizationHeader = req.headers.authorization;
+
+  const token = authorizationHeader.slice(7, authorizationHeader.length);
+
+  const id = jwt.decode(token)._id;
+
+  User.findById(id, (err, user) => {
+    if (err)
+      res.send(err);
+    res.json(user);
+  })
+}
 
 //========================================
 // Login Route
 //========================================
-exports.login = function(req, res, next) {
+controller.login = function(req, res, next) {
 
   let userInfo = setUserInfo(req.user);
 
@@ -38,7 +95,7 @@ exports.login = function(req, res, next) {
 //========================================
 // Registration Route
 //========================================
-exports.register = function(req, res, next) {
+controller.register = function(req, res, next) {
   // Check for registration errors
   const email = req.body.email;
   const firstName = req.body.firstName;
@@ -78,9 +135,6 @@ exports.register = function(req, res, next) {
       user.save(function(err, user) {
         if (err) { return next(err); }
 
-        // Subscribe member to Mailchimp list
-        // mailchimp.subscribeToNewsletter(user.email);
-
         // Respond with JWT if user was created
 
         let userInfo = setUserInfo(user);
@@ -98,7 +152,7 @@ exports.register = function(req, res, next) {
 //========================================
 
 // Role authorization check
-exports.roleAuthorization = function(role) {
+controller.roleAuthorization = function(role) {
   return function(req, res, next) {
     const user = req.user;
 
@@ -118,3 +172,5 @@ exports.roleAuthorization = function(role) {
     })
   }
 }
+
+module.exports = controller;
