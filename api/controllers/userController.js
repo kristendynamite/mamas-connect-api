@@ -67,7 +67,7 @@ controller.getMe = (req, res) => {
 
   const authorizationHeader = req.headers.authorization;
 
-  const token = authorizationHeader.slice(7, authorizationHeader.length);
+  const token = authorizationHeader.replace('Bearer ', '');
 
   const id = jwt.decode(token)._id;
 
