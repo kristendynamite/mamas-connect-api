@@ -44,12 +44,32 @@ controller.getUser = (req, res) => {
 
 //PUT update user
 controller.updateUser = (req, res) => {
-  User.findOneAndUpdate({_id: req.params.userId}, req.body, {new: true}, (err, user) => {
-    if (err)
-      res.send(err);
-    res.json(user);
+  User.findById(req.params.userId, (err, user) => {
+    if (err) res.send(err);
+
+    let update = JSON.parse(JSON.stringify(user)); //deep clone the document
+
+    if (req.body.password || req.body.role) {
+      res.status(400).send({error: 'You may not update a password or role from this route.'});
+    }
+
+    update.email = req.body.email ? req.body.email : update.email;
+    update.profile.firstName = req.body.firstName ? req.body.firstName : update.profile.firstName;
+    update.profile.lastName = req.body.lastName ? req.body.lastName : update.profile.lastName;
+
+    User.findOneAndUpdate({_id: req.params.userId}, update, {new: true}, (err, updatedUser) => {
+      if (err) res.send(err);
+      res.json(updatedUser);
+    });
   });
 };
+
+controller.updateUserRole = (req, res) => {
+  User.findOneAndUpdate({_id: req.params.userId}, {role: req.body.role}, {new: true}, (err, user) => {
+    if (err) res.send(err);
+    res.json(user);
+  });
+}
 
 //DELETE user by id
 controller.deleteUser = (req, res) => {
@@ -163,9 +183,21 @@ controller.roleAuthorization = function(role) {
       }
 
       // If user is found, check role.
-      if (foundUser.role == role) {
-        return next();
-      }
+      // if (foundUser.role == role) {
+      //   return next();
+      // }
+
+      console.log(foundUser.role, role);
+
+
+      if (role === 'Admin' && foundUser.role === 'Admin') return next();
+
+      if (role === 'Mentor' && (foundUser.role === 'Mentor' || foundUser.role === 'Admin')) return next();
+
+      if (role === 'Member' && (foundUser.role === 'Mentor' || foundUser.role === 'Admin' || foundUser.role === 'Member')) return next();
+
+
+
 
       res.status(401).json({ error: 'You are not authorized to view this content.' });
       return next('Unauthorized');

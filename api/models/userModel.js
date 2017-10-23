@@ -31,25 +31,43 @@ const UserSchema = new Schema({
 
 // Pre-save of user to database, hash password if password is modified or new
 UserSchema.pre('save', function(next) {
-  const user = this,
-        SALT_FACTOR = 5;
+  const user = this;
 
   if (!user.isModified('password')) return next();
 
-  bcrypt.genSalt(SALT_FACTOR, function(err, salt) {
-    if (err) return next(err);
+  // bcrypt.genSalt(SALT_FACTOR, (err, salt) => {
+  //   if (err) return next(err);
+  //
+  //   bcrypt.hash(user.password, salt, null, (err, hash) => {
+  //     if (err) return next(err);
+  //     user.password = hash;
+  //     next();
+  //   });
+  // });
 
-    bcrypt.hash(user.password, salt, null, function(err, hash) {
-      if (err) return next(err);
-      user.password = hash;
-      next();
-    });
+  user.createPasswordHash(user.password, (hash) => {
+    user.password = hash;
+    next();
   });
 });
 
+//refactor hash generation to own method for use in password updates
+UserSchema.methods.createPasswordHash = (password, cb) => {
+  const SALT_FACTOR = 5;
+
+  bcrypt.genSalt(SALT_FACTOR, (err, salt) => {
+    if (err) return next(err);
+
+    bcrypt.hash(password, salt, null, (err, hash) => {
+      if (err) return next(err);
+      cb(hash);
+    });
+  });
+}
+
 // Method to compare password for login
-UserSchema.methods.comparePassword = function(candidatePassword, cb) {
-  bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
+UserSchema.methods.comparePassword = function (candidatePassword, cb) {
+  bcrypt.compare(candidatePassword, this.password, (err, isMatch) => {
     if (err) { return cb(err); }
 
     cb(null, isMatch);
