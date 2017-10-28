@@ -38,4 +38,6 @@ router.post('/login', requireLogin, users.login);
 // Update Role route
 router.put('/update_role/:userId', requireAuth, users.roleAuthorization(REQUIRE_ADMIN), users.updateUserRole);
 
+router.put('/update_password/:userId', requireAuth, users.updateUserPassword);
+
 module.exports = router;

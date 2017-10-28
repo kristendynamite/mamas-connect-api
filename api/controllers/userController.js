@@ -98,6 +98,38 @@ controller.getMe = (req, res) => {
   })
 }
 
+controller.updateUserPassword = (req, res) => {
+  const oldPassword = req.body.oldPassword;
+  const newPassword = req.body.newPassword;
+  const userId = req.params.userId;
+
+  //req comes in
+  //URL: api/users/update_password/329423904
+  //payload: { oldPassword: oldpass, newPassword: newpass }
+
+  //grab the user by userId
+  User.findById(userId, (err, user) => {
+    if (err) { res.send(err) }
+
+    //compare the old password to make sure they are authed
+    user.comparePassword(oldPassword, (err, isMatch) => {
+      if (err) { res.send(err); }
+      if (!isMatch) { res.send({error: 'not authed' }); }
+      if (isMatch) {
+        //hash the new password
+        user.createPasswordHash(newPassword, (hashedPassword) => {
+          //update the record in the database with the new hash
+          User.findOneAndUpdate({ _id: userId }, { password: hashedPassword }, { new: true }, (err, user) => {
+            if (err) { res.send(err); }
+            //send back a success message
+            res.json(user);
+          })
+        });
+      }
+    });
+  });
+}
+
 //========================================
 // Login Route
 //========================================
