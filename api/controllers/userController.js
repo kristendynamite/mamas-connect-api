@@ -214,22 +214,9 @@ controller.roleAuthorization = function(role) {
         return next(err);
       }
 
-      // If user is found, check role.
-      // if (foundUser.role == role) {
-      //   return next();
-      // }
-
-      console.log(foundUser.role, role);
-
-
       if (role === 'Admin' && foundUser.role === 'Admin') return next();
-
       if (role === 'Mentor' && (foundUser.role === 'Mentor' || foundUser.role === 'Admin')) return next();
-
       if (role === 'Member' && (foundUser.role === 'Mentor' || foundUser.role === 'Admin' || foundUser.role === 'Member')) return next();
-
-
-
 
       res.status(401).json({ error: 'You are not authorized to view this content.' });
       return next('Unauthorized');
