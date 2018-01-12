@@ -206,6 +206,7 @@ controller.register = function(req, res, next) {
 // Role authorization check
 controller.roleAuthorization = function(role) {
   return function(req, res, next) {
+
     const user = req.user;
 
     User.findById(user._id, function(err, foundUser) {
